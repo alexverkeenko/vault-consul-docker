@@ -4,15 +4,15 @@ services:
 
   vault:
     build:
-      context: ./vault
+      context: ./build/vault
       dockerfile: Dockerfile
     ports:
       - 8200:8200
     volumes:
-      - ./vault/config:/vault/config
-      - ./vault/policies:/vault/policies
-      - ./vault/data:/vault/data
-      - ./vault/logs:/vault/logs
+      - ./build/vault/config:/vault/config
+      - ./build/vault/policies:/vault/policies
+      - ./containers_data/vault/data:/vault/data
+      - ./containers_data/vault/logs:/vault/logs
     environment:
       - VAULT_ADDR=http://127.0.0.1:8200
       - VAULT_API_ADDR=http://127.0.0.1:8200
@@ -24,21 +24,35 @@ services:
  
   consul-worker:
     build:
-      context: ./consul
+      context: ./build/consul
       dockerfile: Dockerfile
     command: agent -server -join consul -config-file=/consul/config/config.json
     volumes:
-      - ./consul/config/consul-config.json:/consul/config/config.json
+      - ./build/consul/config/consul-config.json:/consul/config/config.json
     depends_on:
       - consul
 
   consul:
     build:
-      context: ./consul
+      context: ./build/consul
       dockerfile: Dockerfile
     ports:
       - 8500:8500
     command: agent -server -bind 0.0.0.0 -client 0.0.0.0 -bootstrap-expect 1 -config-file=/consul/config/config.json
     volumes:
-      - ./consul/config/consul-config.json:/consul/config/config.json
-      - ./consul/data:/consul/data
+      - ./build/consul/config/consul-config.json:/consul/config/config.json
+      - ./containers_data/consul/data:/consul/data
+
+  #MySQL
+  configuration-registry-rds:
+    container_name: cr-rds
+    build:
+      context: ./build/mysql
+      dockerfile: Dockerfile  
+    environment:
+      - MYSQL_ROOT_PASSWORD=gfhjkm11
+    command: mysqld --default-authentication-plugin=mysql_native_password
+    ports:
+      - 4407:3306
+    volumes:
+      - ./containers_data/mysql:/var/lib/mysql
